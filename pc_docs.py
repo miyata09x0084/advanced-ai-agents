@@ -5,25 +5,25 @@ import os
 from utils import *
 
 """
-Workflow: 
-Input ("In") → The input is handled by the create_document() function which takes a topic, style guide, and criteria
-LLM Call 1 → Implemented as generate_outline() which creates the initial document outline
-Gate → Implemented as check_outline_criteria() which validates if the outline meets requirements
-Pass Path:
-LLM Call 2 → expand_outline_sections() which expands each section into detailed content
-LLM Call 3 → write_final_document() which creates the final polished document
-Fail Path → Returns None with feedback if criteria aren't met
-Output ("Out") → The final document text
+ワークフロー: 
+入力 ("In") → create_document()関数によって処理され、トピック、スタイルガイド、基準を受け取る
+LLM呼び出し1 → generate_outline()として実装され、初期ドキュメントアウトラインを作成
+ゲート → check_outline_criteria()として実装され、アウトラインが要件を満たすか検証
+パス経路:
+LLM呼び出し2 → expand_outline_sections()で各セクションを詳細なコンテンツに展開
+LLM呼び出し3 → write_final_document()で最終的な完成したドキュメントを作成
+失敗経路 → 基準が満たされない場合はフィードバックと共にNoneを返す
+出力 ("Out") → 最終的なドキュメントテキスト
 
-Important Considerations:
-- Separation of Concerns
-- Structure your inputs and use delimiters
-- Use consistent formatting and spacing
-- Criteria check to verify outputs
-- Structured outputs (not applied in this example)
+重要な考慮事項:
+- 関心の分離
+- 入力を構造化し、区切り文字を使用
+- 一貫したフォーマットとスペーシングを使用
+- 出力を検証するための基準チェック
+- 構造化された出力（この例では適用されていない）
 """
 
-# Delimiters for our prompts
+# プロンプト用の区切り文字
 outline_delimiter = "<outline>"
 outline_delimiter_end = "</outline>"
 
@@ -34,24 +34,24 @@ document_delimiter = "<document>"
 document_delimiter_end = "</document>"
 
 def generate_outline(topic, style_guide):
-    """First LLM call to generate an initial document outline"""
+    """初期ドキュメントアウトラインを生成する最初のLLM呼び出し"""
     system_message = f"""
-    Your task is to create a well-structured outline for a document about the given topic.
-    The outline should follow the style guide provided and include main sections and subsections.
+    与えられたトピックについて、構造化されたドキュメントアウトラインを作成することがあなたのタスクです。
+    アウトラインは提供されたスタイルガイドに従い、メインセクションとサブセクションを含む必要があります。
     
-    Format the outline with:
-    - Main sections marked with numbers (1., 2., 3., etc.)
-    - Subsections marked with letters (a., b., c., etc.)
-    - Brief descriptions for each section
+    アウトラインを以下の形式でフォーマットしてください：
+    - メインセクションは数字でマーク（1., 2., 3., など）
+    - サブセクションは文字でマーク（a., b., c., など）
+    - 各セクションの簡潔な説明
     
-    Output the outline between {outline_delimiter} and {outline_delimiter_end} tags.
+    アウトラインを{outline_delimiter}と{outline_delimiter_end}タグの間に出力してください。
     """
 
     prompt = f"""
-    Topic: {topic}
-    Style Guide: {style_guide}
+    トピック: {topic}
+    スタイルガイド: {style_guide}
     
-    Please generate a detailed outline.
+    詳細なアウトラインを生成してください。
     """
 
     messages = [
@@ -63,13 +63,13 @@ def generate_outline(topic, style_guide):
     return outline
 
 def check_outline_criteria(outline, criteria):
-    """Gate function to validate if the outline meets specified criteria"""
+    """アウトラインが指定された基準を満たすか検証するゲート関数"""
     system_message = f"""
-    Your task is to evaluate if the outline meets all specified criteria.
-    You must return ONLY "PASS" or "FAIL" followed by a brief explanation.
+    アウトラインがすべての指定された基準を満たすか評価することがあなたのタスクです。
+    "PASS"または"FAIL"の後に簡潔な説明のみを返す必要があります。
     
-    Review the outline (delimited by {outline_delimiter}{outline_delimiter_end})
-    against the criteria (delimited by {criteria_delimiter}{criteria_delimiter_end}).
+    アウトライン（{outline_delimiter}{outline_delimiter_end}で区切られた）を
+    基準（{criteria_delimiter}{criteria_delimiter_end}で区切られた）に対してレビューしてください。
     """
 
     prompt = f"""
@@ -91,19 +91,19 @@ def check_outline_criteria(outline, criteria):
     return result.strip().startswith("PASS"), result
 
 def expand_outline_sections(outline):
-    """Second LLM call to expand the outline into detailed sections"""
+    """承認されたアウトラインを詳細なセクションに展開する2番目のLLM呼び出し"""
     system_message = f"""
-    Your task is to expand each section of the approved outline into detailed paragraphs.
-    For each section:
-    1. Maintain the original structure
-    2. Add 2-3 paragraphs of content
-    3. Include relevant examples or supporting points
+    承認されたアウトラインの各セクションを詳細な段落に展開することがあなたのタスクです。
+    各セクションについて：
+    1. 元の構造を維持
+    2. 2-3段落のコンテンツを追加
+    3. 関連する例やサポートポイントを含める
     
-    Keep the expanded content between {document_delimiter} and {document_delimiter_end} tags.
+    展開されたコンテンツを{document_delimiter}と{document_delimiter_end}タグの間に保持してください。
     """
 
     prompt = f"""
-    Please expand this outline into detailed sections:
+    このアウトラインを詳細なセクションに展開してください：
     
     {outline_delimiter}
     {outline}
@@ -119,22 +119,22 @@ def expand_outline_sections(outline):
     return expanded_sections
 
 def write_final_document(expanded_sections, style_guide):
-    """Third LLM call to write the final polished document"""
+    """最終的な完成したドキュメントを作成する3番目のLLM呼び出し"""
     system_message = f"""
-    Your task is to transform the expanded sections into a polished, cohesive document.
+    展開されたセクションを完成した、一貫性のあるドキュメントに変換することがあなたのタスクです。
     
-    1. Add smooth transitions between sections
-    2. Ensure consistent tone and style
-    3. Include an introduction and conclusion
-    4. Follow the provided style guide
+    1. セクション間のスムーズな移行を追加
+    2. 一貫したトーンとスタイルを確保
+    3. 導入と結論を含める
+    4. 提供されたスタイルガイドに従う
     
-    Output the final document between {document_delimiter} and {document_delimiter_end} tags.
+    最終的なドキュメントを{document_delimiter}と{document_delimiter_end}タグの間に出力してください。
     """
 
     prompt = f"""
-    Style Guide: {style_guide}
+    スタイルガイド: {style_guide}
     
-    Please convert these expanded sections into a polished document:
+    これらの展開されたセクションを完成したドキュメントに変換してください：
     
     {document_delimiter}
     {expanded_sections}
@@ -150,52 +150,52 @@ def write_final_document(expanded_sections, style_guide):
     return final_document
 
 def create_document(topic, style_guide, criteria):
-    """Main function to orchestrate the document creation workflow"""
-    # Step 1: Generate initial outline
+    """ドキュメント作成ワークフローを調整するメイン関数"""
+    # ステップ1: 初期アウトラインを生成
     outline = generate_outline(topic, style_guide)
-    print("✓ Generated initial outline")
+    print("✓ 初期アウトラインを生成しました")
     
-    # Step 2: Check if outline meets criteria (Gate)
+    # ステップ2: アウトラインが基準を満たすかチェック（ゲート）
     passes_criteria, feedback = check_outline_criteria(outline, criteria)
-    print(f"→ Criteria check: {feedback}")
+    print(f"→ 基準チェック: {feedback}")
     
     if not passes_criteria:
-        print("✗ Document creation stopped: Outline did not meet criteria")
+        print("✗ ドキュメント作成を停止: アウトラインが基準を満たしませんでした")
         return None
     
-    # Step 3: Expand outline into sections
+    # ステップ3: アウトラインをセクションに展開
     expanded_sections = expand_outline_sections(outline)
-    print("✓ Expanded outline into detailed sections")
+    print("✓ アウトラインを詳細なセクションに展開しました")
     
-    # Step 4: Write final document
+    # ステップ4: 最終的なドキュメントを作成
     final_document = write_final_document(expanded_sections, style_guide)
-    print("✓ Completed final document")
+    print("✓ 最終的なドキュメントを完成しました")
     
     return final_document
 
 if __name__ == "__main__":
-    # Example usage
-    topic = "The Impact of Artificial Intelligence on Modern Healthcare"
+    # 使用例
+    topic = "現代医療における人工知能の影響"
     
     style_guide = """
-    - Use professional, academic tone
-    - Include real-world examples
-    - Keep paragraphs concise (3-4 sentences)
-    - Use active voice
-    - Target audience: Healthcare professionals
+    - 専門的で学術的なトーンを使用
+    - 現実世界の例を含める
+    - 段落を簡潔に保つ（3-4文）
+    - 能動態を使用
+    - 対象読者: 医療専門家
     """
     
     criteria = """
-    1. Must have at least 3 main sections
-    2. Must include both benefits and challenges
-    3. Must address ethical considerations
-    4. Must include future perspectives
-    5. Must have clear logical flow between sections
+    1. 少なくとも3つのメインセクションが必要
+    2. 利点と課題の両方を含む必要がある
+    3. 倫理的考慮事項に対処する必要がある
+    4. 将来の展望を含む必要がある
+    5. セクション間の明確な論理的な流れが必要
     """
     
     final_document = create_document(topic, style_guide, criteria)
     
     if final_document:
-        print("\nFinal Document:")
+        print("\n最終的なドキュメント:")
         print("=" * 50)
         print(final_document)
